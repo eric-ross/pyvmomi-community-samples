@@ -24,7 +24,9 @@ import argparse
 import getpass
 
 from pyVim import connect
+from pyVim.task import WaitForTask
 from pyVmomi import vmodl
+from pyVmomi import vim
 
 
 def get_args():
@@ -58,10 +60,10 @@ def get_args():
 
     args = parser.parse_args()
 
-    if not args.password:
-        args.password = getpass.getpass(
-            prompt='Enter password for host %s and user %s: ' %
-                   (args.host, args.user))
+    #if not args.password:
+    #    args.password = getpass.getpass(
+    #        prompt='Enter password for host %s and user %s: ' %
+    #               (args.host, args.user))
     return args
 
 
@@ -73,26 +75,29 @@ def main():
     args = get_args()
 
     try:
+        import ssl
+        default_context = ssl._create_default_https_context
+        ssl._create_default_https_context = ssl._create_unverified_context
         service_instance = connect.SmartConnect(host=args.host,
                                                 user=args.user,
-                                                pwd=args.password,
+                                                pwd="wCc0dover",
                                                 port=int(args.port))
+        ssl._create_default_https_context = default_context
 
         atexit.register(connect.Disconnect, service_instance)
 
-        print "\nHello World!\n"
-        print "If you got here, you authenticted into vCenter."
-        print "The server is {}!".format(args.host)
-        # NOTE (hartsock): only a successfully authenticated session has a
-        # session key aka session id.
         session_id = service_instance.content.sessionManager.currentSession.key
         print "current session id: {}".format(session_id)
-        print "Well done!"
-        print "\n"
-        print "Download, learn and contribute back:"
-        print "https://github.com/vmware/pyvmomi-community-samples"
-        print "\n\n"
-
+    
+        vm = service_instance.content.searchIndex.FindByInventoryPath("VCSDC/vm/FWQE-Simulators/erictest01")
+        if vm is not None:
+            print "good"
+            cspec = vim.vm.ConfigSpec()
+            mem_size=long(4000)
+            cspec.memoryMB = mem_size
+            WaitForTask(vm.Reconfigure(cspec))
+            
+     
     except vmodl.MethodFault as error:
         print "Caught vmodl fault : " + error.msg
         return -1

@@ -17,7 +17,7 @@ limitations under the License.
 """
 from __future__ import print_function
 import atexit
-from pyVim.connect import SmartConnectNoSSL, Disconnect
+from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vim
 from tools import cli
 
@@ -53,6 +53,7 @@ def printvminfo(vm, depth=1):
 
     summary = vm.summary
     print(summary.config.name)
+    print("P--",vm.parent.name)
 
 
 def main():
@@ -63,17 +64,31 @@ def main():
     args = setup_args()
     si = None
     try:
-        si = SmartConnectNoSSL(host=args.host,
+        import ssl
+        default_context = ssl._create_default_https_context
+        ssl._create_default_https_context = ssl._create_unverified_context
+        si = SmartConnect(host=args.host,
                                user=args.user,
                                pwd=args.password,
                                port=int(args.port))
+        ssl._create_default_https_context = default_context
         atexit.register(Disconnect, si)
     except vim.fault.InvalidLogin:
         raise SystemExit("Unable to connect to host "
                          "with supplied credentials.")
 
+    
+    datacenter = si.content.rootFolder
+    d=datacenter.childEntity[0]
+    vmsFolders = d.vmFolder.childEntity
+    for s in vmsFolders:
+        print(s.name,s.parent.name, s.parent.parent.name, s.parent.parent.parent.name, s.parent.parent.parent.parent.name)
+    sys.exit()
     content = si.RetrieveContent()
+    print(content.rootFolder.name)
     for child in content.rootFolder.childEntity:
+        print(child.name)
+        
         if hasattr(child, 'vmFolder'):
             datacenter = child
             vmfolder = datacenter.vmFolder

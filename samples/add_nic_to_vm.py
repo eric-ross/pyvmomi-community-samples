@@ -142,7 +142,7 @@ def main():
         vm = get_obj(content, [vim.VirtualMachine], args.vm_name)
 
     if vm:
-        add_nic(serviceInstance, vm, args.port_group)
+        add_nic(serviceInstance, vm, args.nic)
     else:
         print "VM not found"
 
