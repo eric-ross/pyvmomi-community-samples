@@ -128,11 +128,15 @@ def main():
     args = get_args()
 
     # connect this thing
+    import ssl
+    default_context = ssl._create_default_https_context
+    ssl._create_default_https_context = ssl._create_unverified_context
     si = SmartConnect(
         host=args.host,
         user=args.user,
         pwd=args.password,
         port=args.port)
+    ssl._create_default_https_context = default_context
     # disconnect this thing
     atexit.register(Disconnect, si)
 

@@ -120,12 +120,16 @@ def add_nic(si, vm, network):
 def main():
     args = get_args()
 
+    import ssl
+    default_context = ssl._create_default_https_context
+    ssl._create_default_https_context = ssl._create_unverified_context
     # connect this thing
     serviceInstance = SmartConnect(
             host=args.host,
             user=args.user,
             pwd=args.password,
             port=args.port)
+    ssl._create_default_https_context = default_context
     # disconnect this thing
     atexit.register(Disconnect, serviceInstance)
 

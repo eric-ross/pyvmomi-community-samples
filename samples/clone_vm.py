@@ -11,6 +11,7 @@ from pyVim.connect import SmartConnect, Disconnect
 import atexit
 import argparse
 import getpass
+#from imaplib import host
 
 
 def get_args():
@@ -196,11 +197,17 @@ def main():
     args = get_args()
 
     # connect this thing
+    #print args.user 
+    import ssl
+    default_context = ssl._create_default_https_context
+    ssl._create_default_https_context = ssl._create_unverified_context
+    print args.user
     si = SmartConnect(
         host=args.host,
         user=args.user,
         pwd=args.password,
         port=args.port)
+    ssl._create_default_https_context = default_context
     # disconnect this thing
     atexit.register(Disconnect, si)
 

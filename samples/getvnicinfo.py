@@ -106,8 +106,10 @@ def GetVMNics(vm):
 
 def GetArgs():
     if len(sys.argv) != 4:
-        host = raw_input("vCenter IP: ")
-        user = raw_input("Username: ")
+        host = "vcsvcenter.vcs.rd.hpicorp.net"
+        #host = raw_input("vCenter IP: ")
+        user = "vcslabad\ericr"
+        #user = raw_input("Username: ")
         password = raw_input("Password: ")
     else:
         host, user, password = sys.argv[1:]
@@ -117,10 +119,15 @@ def GetArgs():
 def main():
     global content, hosts, hostPgDict
     host, user, password = GetArgs()
+    import ssl
+    default_context = ssl._create_default_https_context
+    ssl._create_default_https_context = ssl._create_unverified_context
+    
     serviceInstance = SmartConnect(host=host,
                                    user=user,
                                    pwd=password,
                                    port=443)
+    ssl._create_default_https_context = default_context
     atexit.register(Disconnect, serviceInstance)
     content = serviceInstance.RetrieveContent()
     hosts = GetVMHosts(content)
